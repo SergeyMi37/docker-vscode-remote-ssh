@@ -1,3 +1,15 @@
+# SSH ключи
+ssh-keys/
+*.key
+*.pem
+*.pub
+id_rsa*
+*.pem
+
+# Docker
+.env
+.env.local
+
 # Airflow
 logs/
 plugins/__pycache__/
