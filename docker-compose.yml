@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        USERNAME: ${DEV_USER:-developer}
+        USER_UID: ${DEV_UID:-1000}
+        USER_GID: ${DEV_GID:-1000}
+    container_name: vscode-remote-dev
+    hostname: dev-container
+    ports:
+      - "2222:22"  # SSH порт
+    volumes:
+      - dev-workspace:/workspace
+      - dev-home:/home/developer
+      - /var/run/docker.sock:/var/run/docker.sock  # Опционально: Docker-in-Docker
+    environment:
+      - FORGEJO_URL=${FORGEJO_URL:-http://host.docker.internal:3000}
+      - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME}
+      - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL}
+    restart: unless-stopped
+    networks:
+      - dev-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Для доступа к Forgejo на хосте
+
+networks:
+  dev-network:
+    driver: bridge
+
+volumes:
+  dev-workspace:
+  dev-home:
