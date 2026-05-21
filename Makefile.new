@@ -1,0 +1,43 @@
+.PHONY: help build up down logs shell ssh status clean
+
+HOST_IP := $(shell ip -4 route get 1 | awk '{print $$9}')
+
+help:
+	@echo "Доступные команды:"
+	@echo "  make build    - Собрать Docker образ"
+	@echo "  make up       - Запустить контейнер"
+	@echo "  make down     - Остановить контейнер"
+	@echo "  make logs     - Показать логи"
+	@echo "  make shell    - Войти в контейнер через bash"
+	@echo "  make ssh      - Подключиться через SSH"
+	@echo "  make status   - Статус контейнера"
+	@echo "  make clean    - Очистить все данные"
+
+build:
+	docker compose build
+
+up:
+	docker compose up -d
+	@echo "✅ Контейнер запущен"
+	@echo "SSH порт: $(HOST_IP):2222"
+	@echo "Подключение: ssh developer@$(HOST_IP) -p 2222"
+
+down:
+	docker compose down
+
+logs:
+	docker compose logs -f
+
+shell:
+	docker compose exec dev bash
+
+ssh:
+	ssh developer@$(HOST_IP) -p 2222
+
+status:
+	docker compose ps
+
+clean:
+	docker compose down -v
+	docker compose rm -fv
+	docker volume prune -f

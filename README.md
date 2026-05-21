@@ -25,7 +25,10 @@ make up
 ```bash
 # Получите публичный ключ из контейнера
 make shell
+su - developer
 cat ~/.ssh/id_rsa.pub
+
+bash /usr/local/bin/ssh-setup.sh
 # Скопируйте вывод и добавьте в Forgejo: Settings > SSH Keys
 exit
 ```
@@ -151,3 +154,40 @@ docker-compose --env-file .env.project1 up -d
 - SSH работает только на localhost:2222
 - Все ключи хранятся внутри контейнера
 - Для Forgejo используйте отдельные токены доступа
+
+
+5. Первоначальная настройка
+bash
+# 1. Создать ключи на хосте
+make setup-keys
+# или
+./manage-ssh-keys.sh create
+
+# 2. Показать ключ и добавить в Forgejo
+make show-key
+# Скопировать вывод и добавить в Forgejo: Settings > SSH Keys
+
+# 3. Запустить контейнер
+make up
+
+# 4. Проверить подключение
+make ssh
+# или
+./manage-ssh-keys.sh test
+
+# 5. В VS Code подключиться
+# F1 → Remote-SSH: Connect to Host → developer@localhost -p 2222
+
+
+6. Проверка что ключи сохраняются
+bash
+# После пересборки контейнера
+docker compose down
+docker compose up -d
+
+# Ключи должны быть на месте
+ls -la ./ssh-keys/
+# id_rsa, id_rsa.pub, authorized_keys - все на месте
+
+# Подключение должно работать без перегенерации
+make ssh
