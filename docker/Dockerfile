@@ -83,6 +83,10 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
     && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
+# Создание скрипта настройки Git
+COPY docker/git-setup.sh /usr/local/bin/git-setup.sh
+RUN chmod +x /usr/local/bin/git-setup.sh
+
 # Настройка окружения для пользователя
 RUN echo "export LANG=ru_RU.UTF-8" >> /home/$USERNAME/.bashrc && \
     echo "export LC_ALL=ru_RU.UTF-8" >> /home/$USERNAME/.bashrc && \
@@ -90,6 +94,7 @@ RUN echo "export LANG=ru_RU.UTF-8" >> /home/$USERNAME/.bashrc && \
     echo "alias mc='mc --utf8'" >> /home/$USERNAME/.bashrc && \
     echo "alias ll='ls -la'" >> /home/$USERNAME/.bashrc && \
     echo "alias ls='ls --color=auto'" >> /home/$USERNAME/.bashrc && \
+    echo "source /usr/local/bin/git-setup.sh" >> /home/$USERNAME/.bashrc && \
     chown $USERNAME:$USERNAME /home/$USERNAME/.bashrc
 
 # Настройка MC для пользователя
@@ -105,6 +110,20 @@ source_encoding=CP1251" > /home/$USERNAME/.config/mc/ini && \
 RUN mkdir -p /home/$USERNAME/.ssh \
     && chmod 700 /home/$USERNAME/.ssh \
     && chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh
+
+# Настройка правильной оболочки ---
+RUN chsh -s /bin/bash developer
+
+# Настройка терминала для пользователя
+RUN echo "export TERM=xterm-256color" >> /home/developer/.bashrc && \
+    echo "export SHELL=/bin/bash" >> /home/developer/.bashrc && \
+    echo "set -o emacs" >> /home/developer/.bashrc && \
+    echo "export LANG=ru_RU.UTF-8" >> /home/developer/.bashrc && \
+    echo "export LC_ALL=ru_RU.UTF-8" >> /home/developer/.bashrc
+
+# Установка bash-completion (опционально) ----
+RUN apt-get update && apt-get install -y bash-completion && \
+    echo "source /usr/share/bash-completion/bash_completion" >> /home/developer/.bashrc
 
 # Установка рабочей директории
 WORKDIR /workspace
