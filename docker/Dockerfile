@@ -88,14 +88,22 @@ COPY docker/git-setup.sh /usr/local/bin/git-setup.sh
 RUN chmod +x /usr/local/bin/git-setup.sh
 
 # Настройка окружения для пользователя
-RUN echo "export LANG=ru_RU.UTF-8" >> /home/$USERNAME/.bashrc && \
-    echo "export LC_ALL=ru_RU.UTF-8" >> /home/$USERNAME/.bashrc && \
-    echo "export LANGUAGE=ru_RU:ru" >> /home/$USERNAME/.bashrc && \
-    echo "alias mc='mc --utf8'" >> /home/$USERNAME/.bashrc && \
-    echo "alias ll='ls -la'" >> /home/$USERNAME/.bashrc && \
+RUN echo "alias ll='ls -la'" >> /home/$USERNAME/.bashrc && \
     echo "alias ls='ls --color=auto'" >> /home/$USERNAME/.bashrc && \
+    echo "alias mc='mc -S gotar'" >> /home/$USERNAME/.bashrc && \
     echo "source /usr/local/bin/git-setup.sh" >> /home/$USERNAME/.bashrc && \
     chown $USERNAME:$USERNAME /home/$USERNAME/.bashrc
+
+# Создать временный файл и добавить его в .bashrc
+RUN cat >> /home/developer/.bashrc << 'EOF'
+
+# Настройка поиска по истории с PageUp/PageDown
+if [[ $- == *i* ]]; then
+    bind '"\e[5~": history-search-backward'
+    bind '"\e[6~": history-search-forward'
+fi
+EOF
+
 
 # Настройка MC для пользователя
 RUN mkdir -p /home/$USERNAME/.config/mc && \
