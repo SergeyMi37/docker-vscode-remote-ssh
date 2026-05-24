@@ -5,44 +5,73 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=ru_RU.UTF-8
 ENV LANGUAGE=ru_RU:ru
 ENV LC_ALL=ru_RU.UTF-8
+ENV TZ=Europe/Moscow
 
-RUN apt-get update && apt-get install -y \
-    # SSH и Git
-    openssh-server \
-    git \
-    git-lfs \
-    # Языки программирования
-    python3 \
-    python3-pip \
-    python3-venv \
-    nodejs \
-    npm \
-    # Инструменты разработки
-    curl \
-    wget \
-    vim \
-    htop \
-    sudo \
-    jq \
-    # Midnight Commander и кириллица
-    mc \
-    nano \
-    locales \
-    locales-all \
-    keyboard-configuration \
-    console-data \
-    # Шрифты для кириллицы
-    fonts-freefont-ttf \
-    fonts-dejavu-core \
-    # Очистка
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+# Очистка кэша и обновление с ретраями
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get update --fix-missing && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        gnupg \
+        lsb-release \
+        software-properties-common
 
-# Настройка локали для кириллицы
+# Добавление репозиториев для свежих пакетов
+RUN add-apt-repository -y ppa:git-core/ppa && \
+    add-apt-repository -y ppa:deadsnakes/ppa
+
+# Установка основных пакетов (разбиваем на этапы)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        openssh-server \
+        git \
+        git-lfs \
+        curl \
+        wget \
+        sudo \
+        && rm -rf /var/lib/apt/lists/*
+
+# Установка Python и Node.js
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        python3-venv \
+        nodejs \
+        npm \
+        && rm -rf /var/lib/apt/lists/*
+
+# Установка утилит (проблемные пакеты устанавливаем отдельно)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        vim \
+        htop \
+        jq \
+        nano \
+        && rm -rf /var/lib/apt/lists/*
+
+# Установка MC и кириллицы с игнорированием ошибок
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        mc \
+        locales \
+        && rm -rf /var/lib/apt/lists/*
+
+# Установка остальных пакетов для кириллицы
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        keyboard-configuration \
+        console-data \
+        fonts-freefont-ttf \
+        fonts-dejavu-core \
+        && rm -rf /var/lib/apt/lists/*
+
+# Настройка локали
 RUN locale-gen ru_RU.UTF-8 && \
     update-locale LANG=ru_RU.UTF-8
 
-# Установка uv (быстрый pip)
+# Установка uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Настройка SSH
