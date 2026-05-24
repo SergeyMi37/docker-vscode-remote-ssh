@@ -37,14 +37,14 @@ down:
 	docker compose down
 
 setup-keys:
-	@./manage-ssh-keys.sh create
-	@./manage-ssh-keys.sh show
+	@./man-ssh-setup.sh create
+	@./man-ssh-setup.sh show
 
 show-key:
-	@./manage-ssh-keys.sh show
+	@./man-ssh-setup.sh show
 
 sync-keys:
-	@./manage-ssh-keys.sh sync
+	@./man-ssh-setup.sh sync
 
 ssh:
 	@ssh -p 2222 developer@$(HOST_IP)
