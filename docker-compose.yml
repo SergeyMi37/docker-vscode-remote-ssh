@@ -38,12 +38,12 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"  # Для доступа к Forgejo на хосте
     command: >
-  sh -c "
-    [ ! -f /etc/ssh/ssh_host_rsa_key ] && ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N '' -q 2>/dev/null;
-    [ ! -f /etc/ssh/ssh_host_ecdsa_key ] && ssh-keygen -t ecdsa -b 521 -f /etc/ssh/ssh_host_ecdsa_key -N '' -q 2>/dev/null;
-    [ ! -f /etc/ssh/ssh_host_ed25519_key ] && ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N '' -q 2>/dev/null;
-    /usr/sbin/sshd -D
-  "
+      sh -c "
+        [ ! -f /etc/ssh/ssh_host_rsa_key ] && ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N '' -q 2>/dev/null;
+        [ ! -f /etc/ssh/ssh_host_ecdsa_key ] && ssh-keygen -t ecdsa -b 521 -f /etc/ssh/ssh_host_ecdsa_key -N '' -q 2>/dev/null;
+        [ ! -f /etc/ssh/ssh_host_ed25519_key ] && ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N '' -q 2>/dev/null;
+        /usr/sbin/sshd -D
+      "
 
 networks:
   dev-network:
