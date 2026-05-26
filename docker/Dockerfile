@@ -103,8 +103,9 @@ RUN echo "export LANG=ru_RU.UTF-8" >> /etc/profile.d/lang.sh && \
     echo "export LANGUAGE=ru_RU:ru" >> /etc/profile.d/lang.sh && \
     chmod +x /etc/profile.d/lang.sh
 
-# Генерация SSH host keys (КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ!)
-RUN ssh-keygen -A
+RUN ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N "" && \
+    ssh-keygen -t ecdsa -b 521 -f /etc/ssh/ssh_host_ecdsa_key -N "" && \
+    ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""
 
 # Создание пользователя разработчика
 ARG USERNAME=developer

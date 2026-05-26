@@ -39,9 +39,10 @@ services:
       - "host.docker.internal:host-gateway"  # Для доступа к Forgejo на хосте
     command: >
       sh -c "
-        ssh-keygen -A 2>/dev/null || true &&
-        chown -R developer:developer /home/developer/.ssh 2>/dev/null || true &&
-        /usr/sbin/sshd -D -e
+        ssh-keygen -t rsa -b 4096 -f /etc/ssh/ssh_host_rsa_key -N '' 2>/dev/null &&
+        ssh-keygen -t ecdsa -b 521 -f /etc/ssh/ssh_host_ecdsa_key -N '' 2>/dev/null &&
+        ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N '' 2>/dev/null &&
+        /usr/sbin/sshd -D
       "
 
 networks:
