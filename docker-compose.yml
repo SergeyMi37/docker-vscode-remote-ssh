@@ -11,7 +11,8 @@ services:
     hostname: dev-container
     ports:
       - "2222:22"  # SSH порт
-    user: "${UID}:${GID}"  # Проброс UID/GID с хоста
+      - "8000:8000"    # Проброс порта 8000 для тестирования сервиса
+    user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
     volumes:
       # Монтируем папку с ключами с хоста в контейнер
       - ./ssh-keys:/home/developer/.ssh
@@ -23,6 +24,11 @@ services:
       - LANG=ru_RU.UTF-8
       - LC_ALL=ru_RU.UTF-8
       - LANGUAGE=ru_RU:ru
+      - OLLAMA_HOST=http://host.docker.internal:11434  # Доступ к Ollama на хосте
+      - OLLAMA_API_URL=http://host.docker.internal:11434/api
+      # Для тестового сервиса
+      - SERVICE_HOST=0.0.0.0
+      - SERVICE_PORT=8000
       - FORGEJO_URL=${FORGEJO_URL:-http://host.docker.internal:3000}
       - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME}
       - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL}
