@@ -103,6 +103,9 @@ RUN echo "export LANG=ru_RU.UTF-8" >> /etc/profile.d/lang.sh && \
     echo "export LANGUAGE=ru_RU:ru" >> /etc/profile.d/lang.sh && \
     chmod +x /etc/profile.d/lang.sh
 
+# Генерация SSH host keys (КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ!)
+RUN ssh-keygen -A
+
 # Создание пользователя разработчика
 ARG USERNAME=developer
 ARG USER_UID=1000
@@ -177,4 +180,4 @@ RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config \
 
 EXPOSE 22
 
-CMD ["/usr/sbin/sshd", "-D"]
+CMD ["sh", "-c", "ssh-keygen -A 2>/dev/null || true && /usr/sbin/sshd -D"]
