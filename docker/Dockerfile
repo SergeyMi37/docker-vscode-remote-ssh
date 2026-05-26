@@ -122,7 +122,8 @@ COPY docker/git-setup.sh /usr/local/bin/git-setup.sh
 RUN chmod +x /usr/local/bin/git-setup.sh
 
 # Настройка окружения для пользователя
-RUN echo "alias ll='ls -la'" >> /home/$USERNAME/.bashrc && \
+RUN mkdir -p /home/$USERNAME && \
+    echo "alias ll='ls -la'" >> /home/$USERNAME/.bashrc && \
     echo "alias ls='ls --color=auto'" >> /home/$USERNAME/.bashrc && \
     echo "alias mc='mc -S gotar'" >> /home/$USERNAME/.bashrc && \
     echo "source /usr/local/bin/git-setup.sh" >> /home/$USERNAME/.bashrc && \
