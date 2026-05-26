@@ -11,10 +11,12 @@ services:
     hostname: dev-container
     ports:
       - "2222:22"  # SSH порт
+    user: "${UID}:${GID}"  # Проброс UID/GID с хоста
     volumes:
       # Монтируем папку с ключами с хоста в контейнер
       - ./ssh-keys:/home/developer/.ssh
-      - dev-workspace:/workspace
+      #- dev-workspace:/workspace
+      - ./workspace:/workspace
       - dev-home:/home/developer
       - /var/run/docker.sock:/var/run/docker.sock  # Опционально: Docker-in-Docker
     environment:
