@@ -156,8 +156,9 @@ docker-compose --env-file .env.project1 up -d
 - Для Forgejo используйте отдельные токены доступа
 
 
-5. Первоначальная настройка
-bash
+### 5. Первоначальная настройка SSH-ключей
+
+```bash
 # 1. Создать ключи на хосте
 make setup-keys
 # или
@@ -177,10 +178,11 @@ make ssh
 
 # 5. В VS Code подключиться
 # F1 → Remote-SSH: Connect to Host → developer@localhost -p 2222
+```
 
+### 6. Проверка сохранения ключей
 
-6. Проверка что ключи сохраняются
-bash
+```bash
 # После пересборки контейнера
 docker compose down
 docker compose up -d
@@ -191,3 +193,244 @@ ls -la ./ssh-keys/
 
 # Подключение должно работать без перегенерации
 make ssh
+```
+
+---
+
+## Работа с Docker: образы и контейнеры
+
+### 📦 Основные понятия
+
+| Понятие | Аналогия | Описание |
+|---------|----------|----------|
+| **Образ (Image)** | Чертёж / Штамп | Статичный "слепок" системы. Неизменяемый, хранится на диске |
+| **Контейнер (Container)** | Готовый автомобиль | Запущенный экземпляр образа. Можно изменять, устанавливать ПО |
+| **Dockerfile** | Инструкция | Рецепт сборки образа |
+
+### Ключевые отличия
+
+| Характеристика | Образ | Контейнер |
+|----------------|-------|-----------|
+| Живой/изменяемый | ❌ Нет | ✅ Да |
+| Можно редактировать | ❌ Нельзя | ✅ Можно |
+| Состояние | Статический | Динамический (RAM + процессы) |
+| Можно запустить | ❌ Нельзя | ✅ Да (`docker start`) |
+| Хранит изменения | ❌ Нет | ✅ Да |
+
+---
+
+### 💾 Сохранение работы (из контейнера в образ)
+
+**Ситуация:** вы вручную установили ПО внутри контейнера
+
+```bash
+# 1. Посмотреть список контейнеров
+docker ps -a
+
+# 2. Сохранить изменения в новый образ
+docker commit <CONTAINER_ID> my-saved-image:v1
+
+# 3. Проверить, что образ создался
+docker images | grep my-saved-image
+```
+
+#### Почему `commit`, а не `export`?
+
+| Возможность | `docker commit` | `docker export` |
+|-------------|-----------------|-----------------|
+| Сохранить установленные программы | ✅ | ✅ |
+| Сохранить переменные окружения (ENV, PATH) | ✅ | ❌ |
+| Сохранить точку входа (CMD, ENTRYPOINT) | ✅ | ❌ |
+| Использовать как базовый для Dockerfile | ✅ (`FROM my-image`) | ❌ |
+
+---
+
+### 💿 Бэкап образа в файл
+
+#### Сохранение
+
+```bash
+# Образ → .tar файл
+docker save -o backup.tar my-saved-image:v1
+
+# Сжать (опционально)
+gzip backup.tar  # получится backup.tar.gz
+```
+
+#### Восстановление
+
+```bash
+# Из .tar обратно в Docker
+docker load -i backup.tar
+
+# Если файл сжат
+gunzip -c backup.tar.gz | docker load
+```
+
+---
+
+### 🐳 Использование в Docker Compose
+
+#### Вариант 1: Только образ (рекомендуется)
+
+```yaml
+services:
+  app:
+    image: my-saved-image:v1    # готовый образ из бэкапа
+    container_name: my-container
+    ports:
+      - "8080:80"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+```
+
+**Запуск:**
+
+```bash
+docker compose up -d
+```
+
+#### Вариант 2: Сборка из Dockerfile (разработка)
+
+```yaml
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my-container
+    # ... остальные настройки
+```
+
+**Запуск:**
+
+```bash
+docker compose up -d --build
+```
+
+#### Вариант 3: Гибкий (build + образ)
+
+```yaml
+services:
+  app:
+    # По умолчанию - сборка
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    # С профилем prod - готовый образ
+    image: my-saved-image:v1
+    profiles: ["prod"]
+    
+    container_name: my-container
+    ports:
+      - "8080:80"
+```
+
+**Запуск:**
+
+```bash
+# Сборка из Dockerfile (по умолчанию)
+docker compose up -d
+
+# Готовый образ из бэкапа
+docker compose --profile prod up -d
+```
+
+> **Важное замечание про профили:** Если у сервиса только `profiles` (без `build` или `image` вне профиля), то без `--profile` сервис не запустится (тихо игнорируется).
+
+---
+
+### 🔄 Полный цикл работы
+
+#### Разработка и сохранение прогресса
+
+```bash
+# 1. Запустить контейнер из образа
+docker compose up -d
+
+# 2. Войти внутрь и установить новые пакеты
+docker exec -it my-container bash
+pip install new-package
+exit
+
+# 3. Сохранить изменения в новый образ
+docker commit my-container my-image:v2
+
+# 4. Обновить тег в docker-compose.yml (если нужно)
+# image: my-image:v2
+```
+
+#### Восстановление на новом компьютере
+
+```bash
+# 1. Загрузить образ из бэкапа
+docker load -i my-backup.tar
+
+# 2. Проверить, что образ загрузился
+docker images
+
+# 3. Запустить стек
+docker compose up -d
+```
+
+---
+
+### ⚠️ Важные нюансы
+
+#### Тома (Volumes) НЕ сохраняются в образ
+
+```yaml
+volumes:
+  - ./data:/app/data     # 👈 эти данные не попадут в образ
+  - database:/var/lib/postgresql
+```
+
+**Что делать:** данные из томов нужно бэкапить отдельно
+
+```bash
+# Скопировать важные файлы из контейнера
+docker cp <CONTAINER_ID>:/app/data ./backup-data
+
+# Или бэкап Docker-тома
+docker run --rm -v my-volume:/source -v $(pwd):/backup alpine cp -a /source/. /backup/
+```
+
+#### Аргументы сборки (args) не работают с `image`
+
+```yaml
+build:
+  args:
+    USERNAME: developer   # 👈 работает при сборке
+image: my-image:v1        # 👈 args игнорируются (образ уже готов)
+```
+
+---
+
+### 📋 Полезные команды (шпаргалка)
+
+| Команда | Назначение |
+|---------|------------|
+| `docker ps` | Список запущенных контейнеров |
+| `docker ps -a` | Все контейнеры (включая остановленные) |
+| `docker images` | Список образов |
+| `docker commit <ID> <name>:<tag>` | Контейнер → образ |
+| `docker save -o file.tar <image>` | Образ → .tar файл |
+| `docker load -i file.tar` | .tar файл → образ |
+| `docker exec -it <ID> bash` | Войти в контейнер |
+| `docker logs <ID>` | Посмотреть логи |
+| `docker compose up -d` | Запустить сервисы (фон) |
+| `docker compose down` | Остановить и удалить контейнеры |
+| `docker system prune -a` | Очистить неиспользуемые образы/контейнеры |
+
+---
+
+### ✅ Чек-лист: что делать при ручной настройке
+
+- [ ] Выполнить `docker ps -a` и найти свой контейнер
+- [ ] Сохранить изменения: `docker commit <ID> my-final-env:v1`
+- [ ] Проверить: `docker images \| grep my-final-env`
+- [ ] Сохранить в файл: `docker save -o full-backup.tar my-final-env:v1`
+- [ ] Скопировать .tar на внешний диск / в облако
+- [ ] В `docker-compose.yml` указать `image: my-final-env:v1`
