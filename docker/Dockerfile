@@ -146,7 +146,7 @@ if [[ $- == *i* ]]; then
     bind '"\e[5~": history-search-backward'
     bind '"\e[6~": history-search-forward'
 fi
-EOF
+EOF && \
     \
     # Настройка MC \
     mkdir -p "/home/$USERNAME/.config/mc" && \
