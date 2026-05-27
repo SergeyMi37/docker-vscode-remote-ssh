@@ -153,9 +153,6 @@ RUN USERNAME="${USERNAME:-developer}" && \
     mkdir -p "/home/$USERNAME/.ssh" && \
     chmod 700 "/home/$USERNAME/.ssh" && \
     \
-    # Настройка правильной оболочки \
-    chsh -s /bin/bash "$USERNAME" && \
-    \
     # Настройка терминала \
     echo "export TERM=xterm-256color" >> "/home/$USERNAME/.bashrc" && \
     echo "export SHELL=/bin/bash" >> "/home/$USERNAME/.bashrc" && \
