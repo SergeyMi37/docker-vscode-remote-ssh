@@ -5,6 +5,11 @@ ARG USERNAME=developer
 ARG USER_UID=1000
 ARG USER_GID=1000
 
+# Преобразуем ARG в ENV для гарантированной доступности во всех RUN
+ENV USERNAME=$USERNAME
+ENV USER_UID=$USER_UID
+ENV USER_GID=$USER_GID
+
 # Установка базовых инструментов
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=ru_RU.UTF-8
@@ -123,7 +128,7 @@ COPY docker/git-setup.sh /usr/local/bin/git-setup.sh
 RUN chmod +x /usr/local/bin/git-setup.sh
 
 # Настройка окружения для пользователя
-RUN mkdir -p /home/$USERNAME && \
+RUN touch /home/$USERNAME/.bashrc && \
     echo "alias ll='ls -la'" >> /home/$USERNAME/.bashrc && \
     echo "alias ls='ls --color=auto'" >> /home/$USERNAME/.bashrc && \
     echo "alias mc='mc -S gotar'" >> /home/$USERNAME/.bashrc && \
