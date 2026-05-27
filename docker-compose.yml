@@ -14,7 +14,8 @@ services:
     volumes:
       # Монтируем папку с ключами с хоста в контейнер
       - ./ssh-keys:/home/developer/.ssh
-      - dev-workspace:/workspace
+      #- dev-workspace:/workspace
+      - ./workspace:/workspace
       - dev-home:/home/developer
       - /var/run/docker.sock:/var/run/docker.sock  # Опционально: Docker-in-Docker
     environment:
@@ -24,6 +25,13 @@ services:
       - FORGEJO_URL=${FORGEJO_URL:-http://host.docker.internal:3000}
       - GIT_AUTHOR_NAME=${GIT_AUTHOR_NAME}
       - GIT_AUTHOR_EMAIL=${GIT_AUTHOR_EMAIL}
+      # Доступ к Ollama на хосте
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - OLLAMA_API_URL=http://host.docker.internal:11434/api
+      # Для тестового сервиса
+      - SERVICE_HOST=0.0.0.0
+      - SERVICE_PORT=8000
+      - FORGEJO_URL=${FORGEJO_URL:-http://host.docker.internal:3000}
     restart: unless-stopped
     networks:
       - dev-network
