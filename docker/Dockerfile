@@ -118,25 +118,28 @@ RUN rm -f /etc/ssh/ssh_host_*_key* && \
     ssh-keygen -t ecdsa -b 521 -f /etc/ssh/ssh_host_ecdsa_key -N "" -q && \
     ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N "" -q
 
-# Создание пользователя разработчика
-RUN groupadd -f --gid $USER_GID $USERNAME && \
-    useradd -m -u $USER_UID -g $USER_GID -s /bin/bash $USERNAME 2>/dev/null || true && \
-    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
 # Создание скрипта настройки Git
 COPY docker/git-setup.sh /usr/local/bin/git-setup.sh
 RUN chmod +x /usr/local/bin/git-setup.sh
 
-# Настройка окружения для пользователя
-RUN touch /home/$USERNAME/.bashrc && \
-    echo "alias ll='ls -la'" >> /home/$USERNAME/.bashrc && \
-    echo "alias ls='ls --color=auto'" >> /home/$USERNAME/.bashrc && \
-    echo "alias mc='mc -S gotar'" >> /home/$USERNAME/.bashrc && \
-    echo "source /usr/local/bin/git-setup.sh" >> /home/$USERNAME/.bashrc && \
-    chown $USERNAME:$USERNAME /home/$USERNAME/.bashrc
-
-# Создать временный файл и добавить его в .bashrc
-RUN cat >> /home/$USERNAME/.bashrc << 'EOF'
+# Создание пользователя и полная настройка окружения в одном RUN
+# (чтобы гарантировать доступность переменных в рамках одного shell)
+RUN USERNAME="${USERNAME:-developer}" && \
+    USER_UID="${USER_UID:-1000}" && \
+    USER_GID="${USER_GID:-1000}" && \
+    groupadd -f --gid "$USER_GID" "$USERNAME" && \
+    useradd -m -u "$USER_UID" -g "$USER_GID" -s /bin/bash "$USERNAME" && \
+    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    \
+    # Настройка .bashrc \
+    touch "/home/$USERNAME/.bashrc" && \
+    echo "alias ll='ls -la'" >> "/home/$USERNAME/.bashrc" && \
+    echo "alias ls='ls --color=auto'" >> "/home/$USERNAME/.bashrc" && \
+    echo "alias mc='mc -S gotar'" >> "/home/$USERNAME/.bashrc" && \
+    echo "source /usr/local/bin/git-setup.sh" >> "/home/$USERNAME/.bashrc" && \
+    \
+    # Настройка поиска по истории с PageUp/PageDown \
+    cat >> "/home/$USERNAME/.bashrc" << 'EOF'
 
 # Настройка поиска по истории с PageUp/PageDown
 if [[ $- == *i* ]]; then
@@ -144,35 +147,35 @@ if [[ $- == *i* ]]; then
     bind '"\e[6~": history-search-forward'
 fi
 EOF
-
-
-# Настройка MC для пользователя
-RUN mkdir -p /home/$USERNAME/.config/mc && \
+    \
+    # Настройка MC \
+    mkdir -p "/home/$USERNAME/.config/mc" && \
     echo "[Midnight Commander]\n\
 skin=default\n\
 editor_encoding=UTF-8\n\
 display_encoding=UTF-8\n\
-source_encoding=CP1251" > /home/$USERNAME/.config/mc/ini && \
-    chown -R $USERNAME:$USERNAME /home/$USERNAME/.config
-
-# Настройка SSH для пользователя
-RUN mkdir -p /home/$USERNAME/.ssh \
-    && chmod 700 /home/$USERNAME/.ssh \
-    && chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh
-
-# Настройка правильной оболочки ---
-RUN chsh -s /bin/bash $USERNAME
-
-# Настройка терминала для пользователя
-RUN echo "export TERM=xterm-256color" >> /home/$USERNAME/.bashrc && \
-    echo "export SHELL=/bin/bash" >> /home/$USERNAME/.bashrc && \
-    echo "set -o emacs" >> /home/$USERNAME/.bashrc && \
-    echo "export LANG=ru_RU.UTF-8" >> /home/$USERNAME/.bashrc && \
-    echo "export LC_ALL=ru_RU.UTF-8" >> /home/$USERNAME/.bashrc
-
-# Установка bash-completion (опционально) ----
-RUN apt-get update && apt-get install -y bash-completion && \
-    echo "source /usr/share/bash-completion/bash_completion" >> /home/$USERNAME/.bashrc
+source_encoding=CP1251" > "/home/$USERNAME/.config/mc/ini" && \
+    \
+    # Настройка SSH \
+    mkdir -p "/home/$USERNAME/.ssh" && \
+    chmod 700 "/home/$USERNAME/.ssh" && \
+    \
+    # Настройка правильной оболочки \
+    chsh -s /bin/bash "$USERNAME" && \
+    \
+    # Настройка терминала \
+    echo "export TERM=xterm-256color" >> "/home/$USERNAME/.bashrc" && \
+    echo "export SHELL=/bin/bash" >> "/home/$USERNAME/.bashrc" && \
+    echo "set -o emacs" >> "/home/$USERNAME/.bashrc" && \
+    echo "export LANG=ru_RU.UTF-8" >> "/home/$USERNAME/.bashrc" && \
+    echo "export LC_ALL=ru_RU.UTF-8" >> "/home/$USERNAME/.bashrc" && \
+    \
+    # Установка bash-completion и добавление в .bashrc \
+    apt-get update && apt-get install -y bash-completion && \
+    echo "source /usr/share/bash-completion/bash_completion" >> "/home/$USERNAME/.bashrc" && \
+    \
+    # Назначение правильного владельца на все файлы пользователя \
+    chown -R "$USERNAME:$USERNAME" "/home/$USERNAME"
 
 # Установка рабочей директории
 # WORKDIR /workspace
