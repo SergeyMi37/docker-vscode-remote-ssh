@@ -434,3 +434,4 @@ image: my-image:v1        # 👈 args игнорируются (образ уж�
 - [ ] Сохранить в файл: `docker save -o full-backup.tar my-final-env:v1`
 - [ ] Скопировать .tar на внешний диск / в облако
 - [ ] В `docker-compose.yml` указать `image: my-final-env:v1`
+
