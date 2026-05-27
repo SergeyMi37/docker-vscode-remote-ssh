@@ -1,5 +1,10 @@
 FROM ubuntu:24.04
 
+# Аргументы сборки (должны быть в начале)
+ARG USERNAME=developer
+ARG USER_UID=1000
+ARG USER_GID=1000
+
 # Установка базовых инструментов
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=ru_RU.UTF-8
@@ -109,10 +114,6 @@ RUN rm -f /etc/ssh/ssh_host_*_key* && \
     ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N "" -q
 
 # Создание пользователя разработчика
-ARG USERNAME=developer
-ARG USER_UID=1000
-ARG USER_GID=1000
-
 RUN groupadd -f --gid $USER_GID $USERNAME && \
     useradd -m -u $USER_UID -g $USER_GID -s /bin/bash $USERNAME 2>/dev/null || true && \
     echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -130,7 +131,7 @@ RUN mkdir -p /home/$USERNAME && \
     chown $USERNAME:$USERNAME /home/$USERNAME/.bashrc
 
 # Создать временный файл и добавить его в .bashrc
-RUN cat >> /home/developer/.bashrc << 'EOF'
+RUN cat >> /home/$USERNAME/.bashrc << 'EOF'
 
 # Настройка поиска по истории с PageUp/PageDown
 if [[ $- == *i* ]]; then
@@ -155,18 +156,18 @@ RUN mkdir -p /home/$USERNAME/.ssh \
     && chown -R $USERNAME:$USERNAME /home/$USERNAME/.ssh
 
 # Настройка правильной оболочки ---
-RUN chsh -s /bin/bash developer
+RUN chsh -s /bin/bash $USERNAME
 
 # Настройка терминала для пользователя
-RUN echo "export TERM=xterm-256color" >> /home/developer/.bashrc && \
-    echo "export SHELL=/bin/bash" >> /home/developer/.bashrc && \
-    echo "set -o emacs" >> /home/developer/.bashrc && \
-    echo "export LANG=ru_RU.UTF-8" >> /home/developer/.bashrc && \
-    echo "export LC_ALL=ru_RU.UTF-8" >> /home/developer/.bashrc
+RUN echo "export TERM=xterm-256color" >> /home/$USERNAME/.bashrc && \
+    echo "export SHELL=/bin/bash" >> /home/$USERNAME/.bashrc && \
+    echo "set -o emacs" >> /home/$USERNAME/.bashrc && \
+    echo "export LANG=ru_RU.UTF-8" >> /home/$USERNAME/.bashrc && \
+    echo "export LC_ALL=ru_RU.UTF-8" >> /home/$USERNAME/.bashrc
 
 # Установка bash-completion (опционально) ----
 RUN apt-get update && apt-get install -y bash-completion && \
-    echo "source /usr/share/bash-completion/bash_completion" >> /home/developer/.bashrc
+    echo "source /usr/share/bash-completion/bash_completion" >> /home/$USERNAME/.bashrc
 
 # Установка рабочей директории
 # WORKDIR /workspace
