@@ -123,7 +123,6 @@ COPY docker/git-setup.sh /usr/local/bin/git-setup.sh
 RUN chmod +x /usr/local/bin/git-setup.sh
 
 # Создание пользователя и полная настройка окружения в одном RUN
-# (чтобы гарантировать доступность переменных в рамках одного shell)
 RUN USERNAME="${USERNAME:-developer}" && \
     USER_UID="${USER_UID:-1000}" && \
     USER_GID="${USER_GID:-1000}" && \
@@ -139,22 +138,16 @@ RUN USERNAME="${USERNAME:-developer}" && \
     echo "source /usr/local/bin/git-setup.sh" >> "/home/$USERNAME/.bashrc" && \
     \
     # Настройка поиска по истории с PageUp/PageDown \
-    cat >> "/home/$USERNAME/.bashrc" << 'EOF'
-
-# Настройка поиска по истории с PageUp/PageDown
-if [[ $- == *i* ]]; then
-    bind '"\e[5~": history-search-backward'
-    bind '"\e[6~": history-search-forward'
-fi
-EOF && \
+    echo "" >> "/home/$USERNAME/.bashrc" && \
+    echo "# Настройка поиска по истории с PageUp/PageDown" >> "/home/$USERNAME/.bashrc" && \
+    echo "if [[ \$- == *i* ]]; then" >> "/home/$USERNAME/.bashrc" && \
+    echo "    bind '\"\\e[5~\": history-search-backward'" >> "/home/$USERNAME/.bashrc" && \
+    echo "    bind '\"\\e[6~\": history-search-forward'" >> "/home/$USERNAME/.bashrc" && \
+    echo "fi" >> "/home/$USERNAME/.bashrc" && \
     \
     # Настройка MC \
     mkdir -p "/home/$USERNAME/.config/mc" && \
-    echo "[Midnight Commander]\n\
-skin=default\n\
-editor_encoding=UTF-8\n\
-display_encoding=UTF-8\n\
-source_encoding=CP1251" > "/home/$USERNAME/.config/mc/ini" && \
+    printf '%s\n' '[Midnight Commander]' 'skin=default' 'editor_encoding=UTF-8' 'display_encoding=UTF-8' 'source_encoding=CP1251' > "/home/$USERNAME/.config/mc/ini" && \
     \
     # Настройка SSH \
     mkdir -p "/home/$USERNAME/.ssh" && \
