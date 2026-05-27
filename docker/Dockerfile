@@ -163,16 +163,16 @@ RUN apt-get update && apt-get install -y bash-completion && \
     echo "source /usr/share/bash-completion/bash_completion" >> /home/developer/.bashrc
 
 # Установка рабочей директории
-###WORKDIR /workspace
-###RUN chown -R $USERNAME:$USERNAME /workspace
+WORKDIR /workspace
+RUN chown -R $USERNAME:$USERNAME /workspace
 
 # SSH конфигурация
-RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config \
-    && echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config \
-    && echo "ObscureKeystrokeTiming no" >> /etc/ssh/sshd_config \
-    && echo "ChallengeResponseAuthentication no" >> /etc/ssh/sshd_config \
-    && echo "UsePAM no" >> /etc/ssh/sshd_config \
-    && echo "AcceptEnv LANG LC_ALL LANGUAGE" >> /etc/ssh/sshd_config
+# RUN echo "PasswordAuthentication no" >> /etc/ssh/sshd_config \
+#     && echo "PubkeyAuthentication yes" >> /etc/ssh/sshd_config \
+#     && echo "ObscureKeystrokeTiming no" >> /etc/ssh/sshd_config \
+#     && echo "ChallengeResponseAuthentication no" >> /etc/ssh/sshd_config \
+#     && echo "UsePAM no" >> /etc/ssh/sshd_config \
+#     && echo "AcceptEnv LANG LC_ALL LANGUAGE" >> /etc/ssh/sshd_config
 
 EXPOSE 22
 
