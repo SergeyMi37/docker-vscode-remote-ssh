@@ -74,6 +74,9 @@ RUN locale-gen ru_RU.UTF-8 && \
 # Установка uv
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
+# Установка ruff через uv
+RUN /root/.local/bin/uv pip install --system ruff
+
 # Настройка SSH
 RUN mkdir /var/run/sshd
 COPY docker/ssh-setup.sh /usr/local/bin/ssh-setup.sh
@@ -107,10 +110,16 @@ RUN echo "export LANG=ru_RU.UTF-8" >> /etc/profile.d/lang.sh && \
 ARG USERNAME=developer
 ARG USER_UID=1000
 ARG USER_GID=1000
+ARG USER_PASSWORD=123
 
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
     && echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Установка пароля для пользователя (если передан)
+RUN if [ -n "$USER_PASSWORD" ]; then \
+        echo "$USERNAME:$USER_PASSWORD" | chpasswd; \
+    fi
 
 # Создание скрипта настройки Git
 COPY docker/git-setup.sh /usr/local/bin/git-setup.sh
